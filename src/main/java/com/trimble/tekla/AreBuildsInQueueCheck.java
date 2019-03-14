@@ -26,13 +26,11 @@ import java.util.TimerTask;
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 /**
  *
  * @author jocs
  */
-@Component("areBuildsInQueueCheck")
 public class AreBuildsInQueueCheck implements RepositoryMergeCheck {
 
   private final I18nService i18nService;

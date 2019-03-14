@@ -59,7 +59,7 @@ public class TeamcityPullrequestEventListener {
   public void onPullRequestOpenedEvent(final PullRequestOpenedEvent event) throws IOException, JSONException {
     final PullRequest pr = event.getPullRequest();
     final Repository repo = pr.getFromRef().getRepository();
-    final Settings settings = this.settingsService.getSettings(repo);
+    final Settings settings = this.settingsService.getSettings(event);
     
     Runnable r = () -> {
       try {
