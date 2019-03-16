@@ -112,16 +112,18 @@ public class TeamcityTriggerHook implements PostRepositoryHook<RepositoryHookReq
         final Iterable<String> changedFiles = ChangesetService.GetChangedFiles(scmService, repository, change);     
         for(Trigger configuration : configurations) {         
           if (!ExclusionTriggers.ShouldTriggerOnListOfFiles(configuration.gettriggerInclusion(), configuration.gettriggerExclusion(), changedFiles)) {
+            TeamcityLogger.logMessage(context, "Trigger From Ref: " + referenceId + " Excluded: " +  configuration.getTarget());          
             continue;
-          }      
+          }
+          TeamcityLogger.logMessage(context, "Trigger From Ref: " + referenceId + " Target: " + configuration.getTarget());
           TriggerBuild(configuration, context, referenceId, conf, timeStamp, isEmptyBranch);
         }        
       } catch (NoSuchCommitException ex) {
-        TeamcityLogger.logMessage(context, "No commit Exception: " + ex.getCommitId());
-        TeamcityLogger.logMessage(context, "Stacktrace: " + ex.getStackTrace());
+        TeamcityLogger.logMessage(context, "No commit Exception: " + ex.getCommitId() + " " + referenceId);
+        TeamcityLogger.logMessage(context, "Stacktrace: " + ex.getStackTrace() + " " + referenceId);
       } catch (IOException ex) {
-        TeamcityLogger.logMessage(context, "Failed to trigger: " + ex.getMessage());
-        TeamcityLogger.logMessage(context, "Stacktrace: " + ex.getStackTrace());
+        TeamcityLogger.logMessage(context, "Failed to trigger: " + ex.getMessage() + " " + referenceId);
+        TeamcityLogger.logMessage(context, "Stacktrace: " + ex.getStackTrace() + " " + referenceId);
       }
     }
   }
@@ -162,6 +164,16 @@ public class TeamcityTriggerHook implements PostRepositoryHook<RepositoryHookReq
 
   private void TriggerBuild(final Trigger buildConfig, final RepositoryHookContext context, final String refId, final TeamcityConfiguration conf, final String timestamp, final boolean isEmptyBranch) throws IOException {
     if (buildConfig.isTriggerOnPullRequest() || isEmptyBranch && !buildConfig.isTriggerOnEmptyBranches()) {
+      TeamcityLogger.logMessage(context, "Skipped <Return>: " + buildConfig.getTarget() + " RefChange Type: " + refId);
+      if(buildConfig.isTriggerOnPullRequest()) {
+        TeamcityLogger.logMessage(context, "Skipped <buildConfig.isTriggerOnPullRequest() false>: " + buildConfig.getTarget() + " RefChange Type: " + refId);
+      }
+      if(isEmptyBranch) {
+        TeamcityLogger.logMessage(context, "Skipped <isEmptyBranch true>: " + buildConfig.getTarget() + " RefChange Type: " + refId);
+      }
+      if(buildConfig.isTriggerOnEmptyBranches()) {
+        TeamcityLogger.logMessage(context, "Skipped <buildConfig.isTriggerOnEmptyBranches() true>: " + buildConfig.getTarget() + " RefChange Type: " + refId);
+      }
       return;
     }
 
@@ -170,6 +182,7 @@ public class TeamcityTriggerHook implements PostRepositoryHook<RepositoryHookReq
     }
 
     if (buildConfig.getType().equals("build")) {
+      TeamcityLogger.logMessage(context, "Will Try To Que: " + buildConfig.getTarget() + " RefChange Type: " + refId);
       QueueBuild(
           context,
           buildConfig.getTarget(),
@@ -210,7 +223,7 @@ public class TeamcityTriggerHook implements PostRepositoryHook<RepositoryHookReq
 
     TeamcityLogger.logMessage(context, "" + timeStamp + " Trigger builds for branch: " + branch);
     try {
-      TeamcityLogger.logMessage(context, "Trigger BuildId: " + buildIdIn);
+      TeamcityLogger.logMessage(context, "Trigger BuildId: " + buildIdIn + " " + branch);
 
       if (!this.connector.IsInQueue(conf, buildIdIn, branch, settings)) {
         // check if build is running
@@ -233,12 +246,13 @@ public class TeamcityTriggerHook implements PostRepositoryHook<RepositoryHookReq
 
           // at this point all builds were finished, so we need to trigger
           this.connector.QueueBuild(conf, branch, buildIdIn, comment, isDefault, settings);
+          TeamcityLogger.logMessage(context, "Queued: " + buildIdIn + " " + branch);
         }
       } else {
-        TeamcityLogger.logMessage(context, "Skip already in queue: " + buildIdIn);
+        TeamcityLogger.logMessage(context, "Skip already in queue: " + buildIdIn + " " + branch);
       }
     } catch (final Exception e) {
-      TeamcityLogger.logMessage(context, "BuildId: " + buildIdIn + " Failed");
+      TeamcityLogger.logMessage(context, "BuildId: " + buildIdIn + " Failed " + branch);
       TeamcityLogger.logMessage(context, "Error: " + e.getMessage());
     }
   }
