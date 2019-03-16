@@ -60,7 +60,7 @@ public class AreBuildsInQueueCheck implements RepositoryMergeCheck {
 
     Settings settings = null;
     try {
-      settings = this.settingsService.getSettings(repository);
+      settings = this.settingsService.getSettings(repository).get();
       if (settings == null) {
         return RepositoryHookResult.accepted();
       }
